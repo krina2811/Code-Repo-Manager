@@ -1,0 +1,80 @@
+version: "3.9"
+
+# ── Shared network so containers can talk to each other by name ──
+networks:
+  app_network:
+    driver: bridge
+
+# ── Persistent storage for postgres data ──
+volumes:
+  postgres_data:
+
+services:
+
+  # ────────────────────────────────────────
+  # 1. PostgreSQL Database
+  #    Uses official image — no Dockerfile needed
+  # ────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine          # official postgres image
+    container_name: crm_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data   # data survives container restarts
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────────────
+  # 2. FastAPI Backend
+  #    Built from Dockerfile.api
+  # ────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: crm_api
+    restart: unless-stopped
+    env_file: .env                     # reads your .env file
+    environment:
+      # Override postgres host — inside Docker network, use service name not localhost
+      POSTGRES_HOST: postgres
+    ports:
+      - "8000:8000"                    # host:container
+    depends_on:
+      postgres:
+        condition: service_healthy     # wait for postgres to be ready
+    networks:
+      - app_network
+    volumes:
+      # Mount repos directory so file watcher can see actual code
+      - /mnt/e/My_work:/mnt/e/My_work:rw
+
+  # ────────────────────────────────────────
+  # 3. Streamlit Frontend
+  #    Built from Dockerfile.ui
+  # ────────────────────────────────────────
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    container_name: crm_ui
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Point Streamlit to the API container by service name, not localhost
+      API_BASE_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    networks:
+      - app_network

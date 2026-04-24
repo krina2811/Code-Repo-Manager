@@ -1,0 +1,47 @@
+# Core AI/Agent Framework
+anthropic==0.42.0
+langgraph==0.2.60
+langchain==0.3.17
+langchain-anthropic==0.3.8
+langchain-core==0.3.39
+
+# MCP Server
+mcp==1.1.2
+pydantic==2.10.4
+
+# Code Analysis Tools
+astroid==3.3.5
+radon==6.0.1
+bandit==1.8.0
+pylint==3.3.3
+
+# API Backend
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Frontend
+streamlit==1.41.1
+plotly==5.24.1
+
+# Storage & State Management
+redis==5.2.1
+aiosqlite==0.20.0
+sqlalchemy==2.0.36
+asyncpg>=0.29.0  # PostgreSQL async driver
+psycopg2-binary>=2.9.9  # PostgreSQL driver
+
+# File Operations
+gitpython==3.1.43
+pathspec==0.12.1
+
+# Utilities
+python-dotenv==1.0.1
+pyyaml==6.0.2
+rich==13.9.4
+typer==0.15.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+httpx==0.28.1
