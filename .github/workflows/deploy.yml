@@ -56,7 +56,14 @@ jobs:
           # Tell SSH to trust your EC2 host (prevents "unknown host" prompt)
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # Step 3: Copy your project files to EC2
+      # Step 3: Create app directory on EC2
+      - name: Create app directory on EC2
+        run: |
+          ssh -i ~/.ssh/crm-key.pem \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "mkdir -p /home/${{ secrets.EC2_USER }}/code-repo-manager"
+
+      # Step 4: Copy your project files to EC2
       - name: Copy files to EC2
         run: |
           scp -i ~/.ssh/crm-key.pem -r \
@@ -73,7 +80,7 @@ jobs:
             mcp_server/ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/code-repo-manager/
 
-      # Step 4: SSH into EC2 and run docker-compose
+      # Step 5: SSH into EC2 and run docker-compose
       - name: Deploy on EC2
         run: |
           ssh -i ~/.ssh/crm-key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
