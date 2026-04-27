@@ -77,6 +77,13 @@ async def startup_event():
     logger.info("Listening on http://%s:%s", settings.api_host, settings.api_port)
     logger.info("PostgreSQL: %s:%s/%s", settings.postgres_host, settings.postgres_port, settings.postgres_db)
 
+    # Start MCP server subprocess — agents use it via stdio protocol
+    from core.mcp_client import mcp_client
+    try:
+        mcp_client.start()
+    except Exception as e:
+        logger.warning("MCP server failed to start: %s — agents will use direct fallback", e)
+
     # Restore pending reviews from DB into the in-memory queue
     pending = checkpoint_storage.get_pending_reviews_db()
     for r in pending:
@@ -111,6 +118,8 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     project_watcher.stop_all()
+    from core.mcp_client import mcp_client
+    mcp_client.stop()
     logger.info("Code Repository Manager API shut down")
 
 

@@ -60,7 +60,7 @@ from core.models import (
 from core.file_registry import FileRegistry
 from core.repo_index import RepoIndex, repo_index
 from core.hitl import hitl_router, review_queue
-from mcp_server.tools.code_analysis import CodeAnalysisTools
+from core.mcp_client import mcp_client
 from storage.checkpoint import checkpoint_storage
 from config.settings import settings
 
@@ -76,7 +76,7 @@ class BaseAgent:
 
     def __init__(self, agent_type: AgentType):
         self.agent_type = agent_type
-        self.tools = CodeAnalysisTools()
+        self.tools = mcp_client   # call tools via MCP protocol (falls back to direct if not running)
 
     def create_finding(
         self,

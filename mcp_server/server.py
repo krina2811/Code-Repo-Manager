@@ -157,4 +157,8 @@ async def run_server():
 
 
 if __name__ == "__main__":
+    # Force unbuffered stdout so responses reach the client immediately
+    # when running as a subprocess (default line-buffering causes hangs)
+    import os
+    os.environ.setdefault("PYTHONUNBUFFERED", "1")
     asyncio.run(run_server())
