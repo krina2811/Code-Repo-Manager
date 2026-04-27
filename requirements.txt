@@ -1,5 +1,5 @@
 # Core AI/Agent Framework
-anthropic==0.42.0
+anthropic==0.47.0
 langgraph==0.2.60
 langchain==0.3.17
 langchain-anthropic==0.3.8
@@ -10,7 +10,7 @@ mcp==1.1.2
 pydantic==2.10.4
 
 # Code Analysis Tools
-astroid==3.3.5
+astroid==3.3.8
 radon==6.0.1
 bandit==1.8.0
 pylint==3.3.3
