@@ -1,18 +1,13 @@
 name: Build and Deploy
 
-# ── When to run this workflow ──────────────────────────────────────────────────
 on:
   push:
     branches:
-      - main          # runs every time you push to main branch
-  workflow_dispatch:  # also allows manual trigger from GitHub UI
+      - main
+  workflow_dispatch:
 
-# ── Jobs ───────────────────────────────────────────────────────────────────────
 jobs:
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # JOB 1: Build Docker images and verify they build successfully
-  # ────────────────────────────────────────────────────────────────────────────
   build:
     name: Build Docker Images
     runs-on: ubuntu-latest
@@ -27,9 +22,6 @@ jobs:
       - name: Build UI image
         run: docker build -f Dockerfile.ui -t crm-ui:latest .
 
-  # ────────────────────────────────────────────────────────────────────────────
-  # JOB 2: Deploy to EC2 — only runs after build succeeds
-  # ────────────────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
@@ -39,28 +31,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up SSH key and verify EC2 host fingerprint
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/crm-key.pem
           chmod 600 ~/.ssh/crm-key.pem
-          # Add pre-verified EC2 host fingerprint
-          echo "${{ secrets.EC2_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          echo "${{ secrets.EC2_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      # Step 3: Create app directory on EC2
-      - name: Create app directory on EC2
+      - name: Copy files to EC2
         run: |
           ssh -i ~/.ssh/crm-key.pem \
             -o UserKnownHostsFile=~/.ssh/known_hosts \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
             "mkdir -p ~/code-repo-manager"
-
-      # Step 4: Copy project files to EC2
-      - name: Copy files to EC2
-        run: |
           scp -i ~/.ssh/crm-key.pem \
             -o UserKnownHostsFile=~/.ssh/known_hosts \
             -r \
@@ -68,41 +53,27 @@ jobs:
             Dockerfile.api \
             Dockerfile.ui \
             requirements.txt \
-            api/ \
-            core/ \
-            storage/ \
-            config/ \
-            agents/ \
-            ui/ \
-            mcp_server/ \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/code-repo-manager/
+            api/ core/ storage/ config/ agents/ ui/ mcp_server/ \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/code-repo-manager/
 
-      # Step 5: SSH into EC2 and run docker-compose
       - name: Deploy on EC2
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
           ssh -i ~/.ssh/crm-key.pem \
             -o UserKnownHostsFile=~/.ssh/known_hosts \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/$USER/code-repo-manager
-
-            # Write .env from GitHub Secrets — never stored in repo
-            # ENABLE_BACKUP intentionally omitted — defaults to false on production
-            cat > .env << ENVEOF
-          POSTGRES_HOST=postgres
-          POSTGRES_PORT=5432
-          POSTGRES_DB=code_repo_manager
-          POSTGRES_USER=postgres
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          SECRET_KEY=${{ secrets.SECRET_KEY }}
-          API_BASE_URL=http://${{ secrets.EC2_HOST }}:8000
-          ENVEOF
-
-            # Build and restart containers
-            docker-compose down
-            docker-compose up --build -d
-
-            # Remove old unused images to save disk space
-            docker image prune -f
-
-            echo "Deployment complete"
-          EOF
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "cd ~/code-repo-manager && \
+             echo 'POSTGRES_HOST=postgres' > .env && \
+             echo 'POSTGRES_PORT=5432' >> .env && \
+             echo 'POSTGRES_DB=code_repo_manager' >> .env && \
+             echo 'POSTGRES_USER=postgres' >> .env && \
+             echo 'POSTGRES_PASSWORD=$POSTGRES_PASSWORD' >> .env && \
+             echo 'SECRET_KEY=$SECRET_KEY' >> .env && \
+             echo 'API_BASE_URL=http://$EC2_HOST:8000' >> .env && \
+             docker-compose down && \
+             docker-compose up --build -d && \
+             docker image prune -f && \
+             echo 'Deployment complete'"
