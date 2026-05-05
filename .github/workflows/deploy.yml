@@ -42,10 +42,7 @@ jobs:
 
       - name: Copy files to EC2
         run: |
-          ssh -i ~/.ssh/crm-key.pem \
-            -o UserKnownHostsFile=~/.ssh/known_hosts \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "mkdir -p ~/code-repo-manager"
+          ssh -i ~/.ssh/crm-key.pem -o UserKnownHostsFile=~/.ssh/known_hosts ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/code-repo-manager"
           scp -i ~/.ssh/crm-key.pem \
             -o UserKnownHostsFile=~/.ssh/known_hosts \
             -r \
@@ -57,23 +54,5 @@ jobs:
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/code-repo-manager/
 
       - name: Deploy on EC2
-        env:
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/crm-key.pem \
-            -o UserKnownHostsFile=~/.ssh/known_hosts \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "cd ~/code-repo-manager && \
-             echo 'POSTGRES_HOST=postgres' > .env && \
-             echo 'POSTGRES_PORT=5432' >> .env && \
-             echo 'POSTGRES_DB=code_repo_manager' >> .env && \
-             echo 'POSTGRES_USER=postgres' >> .env && \
-             echo 'POSTGRES_PASSWORD=$POSTGRES_PASSWORD' >> .env && \
-             echo 'SECRET_KEY=$SECRET_KEY' >> .env && \
-             echo 'API_BASE_URL=http://$EC2_HOST:8000' >> .env && \
-             docker-compose down && \
-             docker-compose up --build -d && \
-             docker image prune -f && \
-             echo 'Deployment complete'"
+          ssh -i ~/.ssh/crm-key.pem -o UserKnownHostsFile=~/.ssh/known_hosts ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "cd ~/code-repo-manager && echo 'POSTGRES_HOST=postgres' > .env && echo 'POSTGRES_PORT=5432' >> .env && echo 'POSTGRES_DB=code_repo_manager' >> .env && echo 'POSTGRES_USER=postgres' >> .env && echo 'POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}' >> .env && echo 'SECRET_KEY=${{ secrets.SECRET_KEY }}' >> .env && echo 'API_BASE_URL=http://${{ secrets.EC2_HOST }}:8000' >> .env && docker-compose down && docker-compose up --build -d && docker image prune -f && echo 'Deployment complete'"
