@@ -4,6 +4,8 @@ FROM python:3.11-slim
 # Step 2: Set working directory inside the container
 WORKDIR /app
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Step 3: Install system packages needed to build psycopg2 (postgres driver)
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -11,10 +13,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Step 4: Copy requirements first (Docker caches this layer — faster rebuilds)
-COPY requirements.txt .
+COPY requirements.base.txt requirements.api.txt ./
 
 # Step 5: Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.api.txt
 
 # Step 6: Copy all project code into the container
 COPY . .

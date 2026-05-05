@@ -49,7 +49,9 @@ jobs:
             docker-compose.yml \
             Dockerfile.api \
             Dockerfile.ui \
-            requirements.txt \
+            requirements.base.txt \
+            requirements.api.txt \
+            requirements.ui.txt \
             api/ core/ storage/ config/ agents/ ui/ mcp_server/ \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/code-repo-manager/
 

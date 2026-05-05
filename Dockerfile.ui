@@ -3,12 +3,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Streamlit doesn't need gcc/libpq, lighter install
 RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.base.txt requirements.ui.txt ./
+RUN pip install --no-cache-dir -r requirements.ui.txt
 
 COPY . .
 

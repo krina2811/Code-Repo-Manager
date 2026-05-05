@@ -1,0 +1,42 @@
+# API container — FastAPI + agents + analysis tools
+-r requirements.base.txt
+
+# AI/Agent Framework
+anthropic==0.47.0
+langgraph==0.2.60
+langchain==0.3.17
+langchain-anthropic==0.3.8
+langchain-core==0.3.39
+
+# MCP Server
+mcp==1.1.2
+
+# Code Analysis
+astroid==3.3.8
+radon==6.0.1
+bandit==1.8.0
+pylint==3.3.3
+
+# API Backend
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Storage
+redis==5.2.1
+aiosqlite==0.20.0
+sqlalchemy==2.0.36
+asyncpg>=0.29.0
+
+# File Operations
+gitpython==3.1.43
+pathspec==0.12.1
+
+# Utilities
+rich==13.9.4
+typer==0.15.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+httpx==0.28.1
